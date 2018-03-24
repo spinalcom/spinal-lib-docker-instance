@@ -52,10 +52,22 @@ function DockerImageModel(name) {
     this.add_attr({
         name: name,
         containers: [],
-        volumes: []
+        volumes: [],
+        toCheck: [],
+        processed: false
     });
 
-    this.newContainer = function (port, restoreVolume = false) {
+    this.checkContainer = function (id) {
+      this.toCheck.push(id);
+    }
+
+    this.checkedContainer = function (id) {
+      let i = this.toCheck.indexOf(id);
+      if (i > -1)
+        this.toCheck.splice(i, 1);
+    }
+
+    this.newContainer = function (port, containerName = null, restoreVolume = '') {
       /*
         containers' status:
         0: new (starting)
@@ -67,11 +79,12 @@ function DockerImageModel(name) {
         6: to stop
       */
 
-      let containerName = this.name.get().replace(/[^a-zA-Z0-9_.-]/g, "_") + '-' + port;
+      if (containerName == null)
+        containerName = this.name.get().replace(/[^a-zA-Z0-9_.-]/g, "_") + '-' + port;
 
       let volume = containerName + '_volume';
 
-      this.containers.push({ name: containerName, port: port, volume: volume, status: 0, restoreVolume: restoreVolume });
+      this.containers.push({ name: containerName, port: port, volume: volume, status: 0, restoreVolume: restoreVolume, lastVolume: '' });
     }
 
     this.removeContainer = function (i) {
